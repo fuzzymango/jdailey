@@ -1,0 +1,181 @@
+set cut_paste_input [stack 0]
+version 10.0 v5
+push $cut_paste_input
+Group {
+ name Flicker1
+ knobChanged "\n\nn = nuke.thisNode()\n\nif n\['waveType'].getValue() > 9:\n    n\['blipLength'].setEnabled(True)\nelse:\n    n\['blipLength'].setEnabled(False)\n\n# enter the group\nn.begin()\n\n# sort though nodes to find switch\nfor i in nuke.allNodes():\n    if i.Class() == 'Switch':\n        # get the which value of the switch to find which grade it's pointing at\n        switch_which = int(i\['which'].getValue())\n\n        # get the multiply value of the grade (curve value)\n        pointer = i.input(switch_which)\['multiply'].animation(0).expression()\n\n    # navigate to the controller NoOp        \n    ctrl = nuke.toNode('CTRL')\n\n    # link the curveValue knob to the expression from the grade\n    ctrl\['curveValue'].setExpression(pointer) \n\n# leave the group\nn.end()\n\n\n"
+ selected true
+ xpos 493
+ ypos 528
+ addUserKnob {20 Flicker}
+ addUserKnob {4 waveType l "wave  type" t "Choose the type of cuve you want to use. \nRandom: a totally randomized curve\nNoise: a pseudo \nSine: basic sine function\nTriangle: cusped sine function\nSquare: sine function using only min and max values \nSawtooth: ramps upward and sharply drops\nSawtooth Parabolic: sawtooth with a parabolic ramp\nSawtooth Parabolic Reversed: a mirrored version of sawtooth parabolic. Sharp step up to max val followed by a parabolic drop to min val\nSawtooth exponential: exponential ramp up to max val followed by steep drop to min val\nBounce: symmetric, parabolic curves\nBlip: square function with ability to change how long each blip holds. \nBlip Sine: similar to blip but uses sine waves" M {random noise sine triangle square sawtooth "sawtooth parabolic" "sawtooth parabolic reversed" "sawtooth exponential" bounce blip "blip sine" "" "" "" "" ""}}
+ addUserKnob {6 floodAlpha l "flood alpha" t "Fills the alpha channel with white" -STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {41 maxVal T CTRL.maxVal}
+ addUserKnob {41 minVal T CTRL.minVal}
+ addUserKnob {41 waveLength T CTRL.waveLength}
+ addUserKnob {41 offset T CTRL.offset}
+ addUserKnob {41 blipLength T CTRL.blipLength}
+ addUserKnob {26 ""}
+ addUserKnob {41 curveValue T CTRL.curveValue}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 290
+  ypos -754
+ }
+ Dot {
+  name Dot1
+  note_font_size 25
+  xpos 321
+  ypos -633
+ }
+set N782fa570 [stack 0]
+ Grade {
+  channels rgba
+  multiply {{"((int((frame+CTRL.offset) % CTRL.waveLength)) >= 0 ? ((int((frame+CTRL.offset) % CTRL.waveLength)) <= (0+(CTRL.blipLength-1)) ? ((sin(pi*((frame+CTRL.offset) % CTRL.waveLength)/CTRL.blipLength)/2+1/2) * (2*CTRL.maxVal-2*CTRL.minVal) + (2*CTRL.minVal-CTRL.maxVal)) : CTRL.minVal)  : CTRL.minVal)"}}
+  black_clamp false
+  name SINE_BLIP
+  xpos 950
+  ypos -442
+  addUserKnob {20 User}
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"((frame+(CTRL.offset+CTRL.waveLength)) % (CTRL.waveLength+CTRL.blipLength)/(CTRL.waveLength)) *(CTRL.waveLength/CTRL.blipLength) - (CTRL.waveLength/CTRL.blipLength) >= 0 ? CTRL.maxVal : CTRL.minVal"}}
+  black_clamp false
+  name BLIP
+  xpos 840
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"abs(sin(pi*(frame + CTRL.offset)/CTRL.waveLength))* (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name BOUNCE
+  xpos 730
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"(exp(2*pi*((frame+CTRL.offset) % CTRL.waveLength)/CTRL.waveLength)-1)/exp(2*pi) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SAWTOOTH_EXPONENTIAL
+  xpos 620
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"cos((pi*(frame+CTRL.offset)/(2*CTRL.waveLength)) % (pi/2)) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SAWTOOTH_PARABOLIC_REVERSED
+  xpos 510
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"sin((pi*(frame+CTRL.offset)/(2*CTRL.waveLength)) % (pi/2)) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SAWTOOTH_PARABOLIC
+  xpos 400
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"((frame+CTRL.offset) % CTRL.waveLength)/CTRL.waveLength * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SAWTOOTH
+  xpos 290
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"int(sin(2*pi*(frame+CTRL.offset)/CTRL.waveLength)+1) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SQUARE
+  xpos 180
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"(asin(sin(2*pi*(frame+CTRL.offset)/CTRL.waveLength))/pi+0.5) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name TRIANGLE
+  xpos 70
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"(sin(2*pi*(frame+CTRL.offset)/CTRL.waveLength)+1)/2 * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name SINE
+  xpos -40
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"(noise((frame+CTRL.offset)/CTRL.waveLength)+1)/2 * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal"}}
+  black_clamp false
+  name NOISE
+  xpos -150
+  ypos -442
+ }
+push $N782fa570
+ Grade {
+  channels rgba
+  multiply {{"(random((frame+CTRL.offset)/CTRL.waveLength) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal)"}}
+  black_clamp false
+  name RANDOM
+  xpos -260
+  ypos -442
+ }
+ Switch {
+  inputs 12
+  which {{parent.waveType}}
+  name Switch1
+  xpos 290
+  ypos -250
+ }
+ Shuffle {
+  alpha white
+  name Shuffle1
+  selected true
+  xpos 290
+  ypos -208
+  disable {{!parent.floodAlpha}}
+ }
+ Output {
+  name Output1
+  xpos 290
+  ypos -154
+ }
+ NoOp {
+  inputs 0
+  name CTRL
+  xpos -480
+  ypos -538
+  addUserKnob {20 User}
+  addUserKnob {7 curveValue}
+  curveValue {{"(random((frame+CTRL.offset)/CTRL.waveLength) * (CTRL.maxVal-CTRL.minVal) + CTRL.minVal)"}}
+  addUserKnob {6 channels_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
+  addUserKnob {7 blipLength +DISABLED R 0 100}
+  blipLength 5
+  addUserKnob {7 maxVal}
+  maxVal 1
+  addUserKnob {7 minVal}
+  addUserKnob {7 waveLength R 0 100}
+  waveLength 10
+  addUserKnob {7 offset}
+ }
+end_group
